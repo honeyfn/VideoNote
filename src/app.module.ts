@@ -3,9 +3,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { NotesModule } from './notes/notes.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule],
+  imports: [AuthModule, PrismaModule, NotesModule],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
