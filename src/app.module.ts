@@ -5,12 +5,15 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { NotesModule } from './notes/notes.module';
 import { SummarizerModule } from './summarizer/summarizer.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, NotesModule, SummarizerModule],
+  imports: [AuthModule,PrismaModule,NotesModule,SummarizerModule,UsersModule,],
   providers: [
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}
-
