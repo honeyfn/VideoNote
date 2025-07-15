@@ -4,11 +4,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { NotesModule } from './notes/notes.module';
+import { SummarizerModule } from './summarizer/summarizer.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, NotesModule],
+  imports: [AuthModule, PrismaModule, NotesModule, SummarizerModule],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule {}
+
