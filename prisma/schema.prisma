@@ -23,7 +23,6 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-
 model Note {
   id        Int      @id @default(autoincrement())
   content   String

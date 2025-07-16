@@ -6,9 +6,10 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { NotesModule } from './notes/notes.module';
 import { SummarizerModule } from './summarizer/summarizer.module';
 import { UsersModule } from 'src/users/users.module';
+import { TranscriptionModule } from './transcription/transcription.module';
 
 @Module({
-  imports: [AuthModule,PrismaModule,NotesModule,SummarizerModule,UsersModule,],
+  imports: [AuthModule,PrismaModule,NotesModule,SummarizerModule,UsersModule, TranscriptionModule,],
   providers: [
     {
       provide: APP_GUARD,
