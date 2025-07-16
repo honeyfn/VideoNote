@@ -1,31 +1,70 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-import { User, PublicUser } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<PublicUser> {
-    const existing = this.users.find(u => u.email === createUserDto.email);
+  async create(createUserDto: CreateUserDto) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email },
+    });
+
     if (existing) {
       throw new BadRequestException('El correo ya está registrado');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser: User = {
-      id: this.users.length + 1,
-      email: createUserDto.email,
-      password: hashedPassword,
-    };
 
-    this.users.push(newUser);
-    const { password, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
+    return this.prisma.user.create({
+      data: {
+        name: createUserDto.name,
+        email: createUserDto.email,
+        password: hashedPassword,
+      },
+    });
   }
 
-  findAll(): PublicUser[] {
-    return this.users.map(({ password, ...rest }) => rest);
+  findAll() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        // omitimos password para no exponerlo
+      },
+    });
+  }
+
+  findOne(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  update(id: number, updateUserDto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { id },
+      data: updateUserDto,
+    });
+  }
+
+  remove(id: number) {
+    return this.prisma.user.delete({
+      where: { id },
+    });
   }
 }
+
