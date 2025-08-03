@@ -11,55 +11,62 @@ export class TranscriptionService {
 
   constructor(private http: HttpService) {}
 
-  async transcribeAudio(filePath: string): Promise<string> {
-    const formData = new FormData();
-    const fileStream = fs.createReadStream(filePath);
-    formData.append('file', fileStream);
+  async transcribeAudioFromBuffer(
+  buffer: Buffer,
+  filename: string,
+  mimetype: string,
+): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', buffer, {
+    filename,
+    contentType: mimetype,
+  });
 
-    // Paso 1: subir el archivo
-    const uploadResponse = await lastValueFrom(
-      this.http.post(`${this.API_URL}/upload`, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          authorization: this.API_KEY,
-        },
+  // Paso 1: subir el archivo
+  const uploadResponse = await lastValueFrom(
+    this.http.post(`${this.API_URL}/upload`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        authorization: this.API_KEY,
+      },
+    }),
+  );
+
+  const audioUrl = uploadResponse.data.upload_url;
+
+  // Paso 2: solicitar transcripción
+  const transcribeResponse = await lastValueFrom(
+    this.http.post(
+      `${this.API_URL}/transcript`,
+      { audio_url: audioUrl },
+      {
+        headers: { authorization: this.API_KEY },
+      },
+    ),
+  );
+
+  const transcriptId = transcribeResponse.data.id;
+
+  // Paso 3: esperar el resultado
+  let status = 'processing';
+  let transcript = '';
+
+  while (status !== 'completed') {
+    const poll = await lastValueFrom(
+      this.http.get(`${this.API_URL}/transcript/${transcriptId}`, {
+        headers: { authorization: this.API_KEY },
       }),
     );
 
-    const audioUrl = uploadResponse.data.upload_url;
+    status = poll.data.status;
+    transcript = poll.data.text;
 
-    // Paso 2: solicitar transcripción
-    const transcribeResponse = await lastValueFrom(
-      this.http.post(
-        `${this.API_URL}/transcript`,
-        { audio_url: audioUrl },
-        {
-          headers: { authorization: this.API_KEY },
-        },
-      ),
-    );
+    if (status === 'failed') throw new Error('Transcripción fallida');
 
-    const transcriptId = transcribeResponse.data.id;
-
-    // Paso 3: esperar el resultado
-    let status = 'processing';
-    let transcript = '';
-
-    while (status !== 'completed') {
-      const poll = await lastValueFrom(
-        this.http.get(`${this.API_URL}/transcript/${transcriptId}`, {
-          headers: { authorization: this.API_KEY },
-        }),
-      );
-
-      status = poll.data.status;
-      transcript = poll.data.text;
-
-      if (status === 'failed') throw new Error('Transcripción fallida');
-
-      await new Promise((res) => setTimeout(res, 3000)); // espera 3s
-    }
-
-    return transcript;
+    await new Promise((res) => setTimeout(res, 3000)); // espera 3s
   }
+
+  return transcript;
+}
+
 }
